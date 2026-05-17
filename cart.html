@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Urban Harvest Grocery | Cart</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="brand">
+      <div class="logo-box">UH</div>
+      <div>
+        <h1>Urban Harvest</h1>
+        <p>Fresh groceries at your doorstep</p>
+      </div>
+    </div>
+    <div class="nav-right">
+      <a class="nav-link" href="index.html">Home</a>
+      <a class="nav-link active" href="cart.html">Cart <span id="cartCount" class="count-badge">0</span></a>
+    </div>
+  </nav>
+
+  <main class="container cart-layout">
+    <section class="box">
+      <h2>Cart</h2>
+      <div id="cartList" class="cart-list"></div>
+    </section>
+
+    <section class="box">
+      <h2>Order Summary</h2>
+      <div id="summary"></div>
+      <button id="placeOrderBtn" disabled>Place Order</button>
+      <p id="message" class="message"></p>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
