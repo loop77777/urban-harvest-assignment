@@ -1,3 +1,4 @@
+// Static product catalog provided in assignment requirements.
 const products = [
   { id: 1, name: "Tomatoes", category: "Vegetables", price: 30, unit: "500g", inStock: true, image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&w=900&q=80" },
   { id: 2, name: "Spinach", category: "Vegetables", price: 25, unit: "250g", inStock: true, image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=900&q=80" },
@@ -9,7 +10,11 @@ const products = [
   { id: 8, name: "Coriander", category: "Herbs", price: 15, unit: "Bunch", inStock: true, image: "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?auto=format&fit=crop&w=900&q=80" }
 ];
 
+// Business constant for order total calculation.
 const deliveryCharge = 40;
+const cartStorageKey = "uh_cart";
+
+// Cache DOM references once. Some elements exist only on specific pages.
 const categoryFilter = document.getElementById("categoryFilter");
 const productGrid = document.getElementById("productGrid");
 const cartList = document.getElementById("cartList");
@@ -18,13 +23,36 @@ const cartCount = document.getElementById("cartCount");
 const placeOrderBtn = document.getElementById("placeOrderBtn");
 const message = document.getElementById("message");
 
+// Fast lookup to avoid repeating product array searches.
+function getProductById(productId) {
+  return products.find((product) => product.id === Number(productId));
+}
+
+// Read cart from localStorage; fall back safely if parsing fails.
 function getCart() {
-  const stored = localStorage.getItem("uh_cart");
-  return stored ? JSON.parse(stored) : {};
+  const stored = localStorage.getItem(cartStorageKey);
+
+  try {
+    return stored ? JSON.parse(stored) : {};
+  } catch (error) {
+    return {};
+  }
 }
 
 function saveCart(cart) {
-  localStorage.setItem("uh_cart", JSON.stringify(cart));
+  localStorage.setItem(cartStorageKey, JSON.stringify(cart));
+}
+
+// Convert cart object into normalized lines with product details.
+function getCartLines() {
+  const cart = getCart();
+  return Object.entries(cart)
+    .map(([id, qty]) => {
+      const item = getProductById(id);
+      if (!item) return null;
+      return { id: Number(id), item, qty: Number(qty) };
+    })
+    .filter(Boolean);
 }
 
 function addToCart(productId) {
@@ -57,6 +85,7 @@ function removeItem(productId) {
   renderAll();
 }
 
+// Populate category dropdown only on home page.
 function initCategories() {
   if (!categoryFilter) return;
 
@@ -92,17 +121,15 @@ function renderProducts() {
 function renderCart() {
   if (!cartList) return;
 
-  const cart = getCart();
-  const entries = Object.entries(cart);
+  const lines = getCartLines();
 
-  if (entries.length === 0) {
+  if (lines.length === 0) {
     cartList.innerHTML = "<p>Your cart is empty.</p>";
     return;
   }
 
-  cartList.innerHTML = entries
-    .map(([id, qty]) => {
-      const item = products.find((p) => p.id === Number(id));
+  cartList.innerHTML = lines
+    .map(({ id, qty, item }) => {
       return `
         <div class="cart-item">
           <strong>${item.name}</strong>
@@ -121,11 +148,7 @@ function renderCart() {
 function renderSummary() {
   if (!summary || !placeOrderBtn) return;
 
-  const cart = getCart();
-  const lines = Object.entries(cart).map(([id, qty]) => {
-    const item = products.find((p) => p.id === Number(id));
-    return { name: item.name, qty: Number(qty), price: item.price };
-  });
+  const lines = getCartLines().map(({ item, qty }) => ({ name: item.name, qty, price: item.price }));
 
   const subtotal = lines.reduce((sum, line) => sum + line.qty * line.price, 0);
   const total = subtotal + (lines.length ? deliveryCharge : 0);
@@ -166,12 +189,13 @@ function renderAll() {
 
 if (placeOrderBtn) {
   placeOrderBtn.addEventListener("click", () => {
-    localStorage.removeItem("uh_cart");
+    localStorage.removeItem(cartStorageKey);
     if (message) message.textContent = "Order placed successfully. Fresh groceries are on the way.";
     renderAll();
   });
 }
 
+// Initialize current page view and expose handlers used by inline onclick.
 initCategories();
 renderAll();
 
